@@ -1,28 +1,23 @@
 import pathlib
 import abc
 import cv2
-import sys
-import shutil
-
-import imutils
 import numpy
+import sys
 from core.key_shortcuts import find_key
-import datetime
+from core.worker import *
 import logging
 import threading
 from ui.gui import *
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QMainWindow, QLabel, QGridLayout, QWidget
-from PyQt5.QtWidgets import QPushButton
-from PyQt5.QtWidgets import QMessageBox
-from PyQt5.QtCore import QSize
+from PyQt5.QtWidgets import QMessageBox, QTreeWidgetItem
 import time
 from PyQt5.QtWidgets import QFileDialog
 
-lables = [["Original", "Threshold", "Contours"],
-          ["Biggest Contour", "Warp Prespective", "Adaptive Threshold"]]
+LOGGER = logging.getLogger('root')
+DESKTOP_PATH = pathlib.Path.home() / 'Desktop'
+PREVIEW_TAGS = [["Original", "Threshold", "Contours"],
+                ["Biggest Contour", "Warp Prespective", "Adaptive Threshold"]]
 
-logger = logging.getLogger('root')
 
 
 class Resources(abc.ABC):
@@ -30,24 +25,23 @@ class Resources(abc.ABC):
 
 
 class Backend(Resources):
+
     def __init__(self):
-        self.desktop_path = pathlib.Path.home() / 'Desktop'
-        self.output_dir = self.desktop_path / 'DS'
+        self.output_dir = pathlib.Path.home() / 'Desktop' / 'DS'
         self.output_dir.parent.mkdir(parents=True, exist_ok=True)
-        self.dials_array = dict()
-        try:
-            self.no_contour_image = cv2.imread('resources/contourless.jpg')
-        except Exception as e:
-            print(str(e))
         self.app = QtWidgets.QApplication(sys.argv)
         self.ui = Ui_MainWindow()
         self.main_window = QtWidgets.QMainWindow()
-        self.dials = list()
+
         self.ui.setupUi(self.main_window)
 
         self.main_window.show()
-        self.display_area_width = self.ui.display_area.size().width()
-        self.display_area_height = self.ui.display_area.size().height()
+        self.test=WorkerThread()
+
+
+
+    def catch(self,val):
+        print(val)
 
         # self.commands = (
         #     ('Generate Graphical User Interface', self.generate_gui()),
@@ -55,26 +49,17 @@ class Backend(Resources):
         #     ('Create signals between gui and controls ', self.create_signals())
         # )
 
-    @staticmethod
-    def draw_on_image(img, message, **kwargs):
-        background = kwargs.get('background', False)
-
-        if background:
-            r_img = cv2.rectangle(img, (5, 5), (int(len(message) * 10 + 20), 40), (255, 255, 255), thickness=-1)
-
-        r_img = cv2.putText(img, message, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 255), 2)
-
-        return r_img
-
-    @staticmethod
-    def hstack_imgs(list_of_imgs: list):
-        hstack = None
-        for x in range(0, len(list_of_imgs)):
-            if x == 0:
-                hstack = list_of_imgs[x]
+    def detect_cameras(self):
+        index = 0
+        self.ui.souce_camera.clear()
+        while True:
+            cap = cv2.VideoCapture(index, cv2.CAP_DSHOW)
+            if not cap.read()[0]:
+                break
             else:
-                hstack = numpy.hstack((hstack, list_of_imgs[x]))
-        return hstack
+                self.ui.souce_camera.addItems([f'Camera {index + 1}'])
+            cap.release()
+            index += 1
 
     def messagebox_dialog(self, title: str, text: str) -> bool:
         reply = QMessageBox.question(self.main_window, title, text,
@@ -88,15 +73,19 @@ class Backend(Resources):
         self.ui.source_file.setChecked(False)
 
     def source_file_checked(self):
-        self.ui.source_dir.setChecked(False)
-        self.ui.source_camera.setChecked(False)
-        self.ui.previous_button.setVisible(False)
-        self.ui.next_button.setVisible(False)
+        path = self.get_image_path()
+        if len(path):
+            self.ui.source_dir.setChecked(False)
+            self.ui.souce_camera.setEnabled(False)
+            self.ui.previous_button.setVisible(False)
+            self.ui.next_button.setVisible(False)
+            self.test.resource=3.6
+            self.test.start()
 
-        t = threading.Thread(target=self.loop, args=(cv2.imread(self.get_image_path()),))
-        t.start()
 
     def loop(self, resource):
+        print(type(resource))
+        print(resource)
         while True:
             time.sleep(0.3)
             height, width, channel = resource.shape
@@ -121,7 +110,7 @@ class Backend(Resources):
             img_biggest_contour = resource.copy()
             cv2.drawContours(img_contours, contours, -1, (170, 255, 0), 10)
 
-            biggest, max_area = self.biggestContour(contours)
+            biggest, max_area = self.find_biggest_contour(contours)
             if biggest.size != 0:
                 biggest = self.reorder(biggest)
                 cv2.drawContours(img_biggest_contour, biggest, -1, (0, 255, 0), 20)
@@ -134,7 +123,7 @@ class Backend(Resources):
                 # TO SAVE SECTION
 
                 save_warp_gray = cv2.medianBlur(cv2.cvtColor(save_warp_colored, cv2.COLOR_BGR2GRAY),
-                                                   2 * self.ui.dial_kernel.value() - 1) if self.ui.median_blur.isChecked() else cv2.cvtColor(
+                                                2 * self.ui.dial_kernel.value() - 1) if self.ui.median_blur.isChecked() else cv2.cvtColor(
                     save_warp_colored, cv2.COLOR_BGR2GRAY)
 
                 img_adaptive_threshold = cv2.adaptiveThreshold(save_warp_gray, 255, 1, 1, 7, 2)
@@ -152,65 +141,61 @@ class Backend(Resources):
             if cv2.waitKey(1):
                 find_key(cv2.waitKey(1))
 
-            stacked_images = self.stack_images(image_array, lables)
+            stacked_images = self.stack_images(image_array, PREVIEW_TAGS)
 
             stacked_images_copy = QtGui.QImage(stacked_images.data, stacked_images.shape[1], stacked_images.shape[0],
                                                3 * stacked_images.shape[1],
                                                QtGui.QImage.Format_RGB888)
 
-            pixmap = QtGui.QPixmap(stacked_images_copy).scaled(self.display_area_width, self.display_area_height)
+            pixmap = QtGui.QPixmap(stacked_images_copy)
             self.ui.display_area.setPixmap(pixmap)
-
 
     def source_dir_checked(self):
         self.ui.source_file.setChecked(False)
-        self.ui.source_camera.setChecked(False)
-
+        self.ui.souce_camera.setEnabled(False)
 
     def get_image_path(self) -> str:
-        return QFileDialog.getOpenFileName(self.main_window, "Open file", str(self.desktop_path),
+        return QFileDialog.getOpenFileName(self.main_window, "Open file", str(DESKTOP_PATH),
                                            'Image files (*.png *.jpg *.gif)')[0]
-
 
     def select_output_dir(self):
         directory = str(QFileDialog.getExistingDirectory(self.main_window, "Select Directory"))
-        if len(directory) > 3:
-            if pathlib.Path(directory).is_dir():
-                self.output_dir = pathlib.Path(directory)
-                lenght_of_path = len(str(self.output_dir))
-                self.ui.output_path_label.setToolTip(str(directory))
-                if lenght_of_path > 40:
-                    self.ui.output_path_label.setText("..." + str(self.output_dir)[lenght_of_path - 40:lenght_of_path])
-                else:
-                    self.ui.output_path_label.setText(str(self.output_dir))
-        else:
-            return self.desktop_path
-
+        if pathlib.Path(directory).is_dir() and len(directory) > 3:
+            self.output_dir = pathlib.Path(directory)
+            lenght_of_path = len(str(self.output_dir))
+            self.ui.output_path_label.setToolTip(str(directory))
+            if lenght_of_path > 40:
+                self.ui.output_path_label.setText("..." + str(self.output_dir)[lenght_of_path - 40:lenght_of_path])
+            else:
+                self.ui.output_path_label.setText(str(self.output_dir))
 
     def create_signals(self):
         self.ui.output_path_label.setText('Desktop is default location.')
         self.ui.select_output_button.clicked.connect(self.select_output_dir)
         self.ui.source_dir.clicked.connect(self.source_dir_checked)
-        self.ui.source_camera.clicked.connect(self.source_camera_checked)
         self.ui.source_file.clicked.connect(self.source_file_checked)
         self.ui.clear_the_workspace.clicked.connect(self.clean_workspace)
-
+        self.ui.souce_camera.setPlaceholderText('Cameras')
         self.ui.dial_thresh_x.valueChanged.connect(self.ui.lcd_thresh_x.display)
+        self.detect_cameras()
+
+        self.test.result.connect(self.catch)
 
         self.ui.dial_thresh_y.valueChanged.connect(self.ui.lcd_thresh_y.display)
         self.ui.dial_kernel.valueChanged.connect(self.ui.lcd_kernel.display)
 
         sys.exit(self.app.exec_())
 
-
     def clean_workspace(self):
         if self.messagebox_dialog('Clear the workspace', 'Are you sure ?'):
+            if self.thread_file.is_alive():
+                print('dadsa')
+                self.thread_file.join()
             self.ui.display_area.clear()
-            self.ui.source_file.setChecked(False)
-            self.ui.source_camera.setChecked(False)
-            self.ui.source_dir.setChecked(False)
-            logger.info('The workspace has been cleaned')
-
+            self.ui.source_file.setEnabled(True)
+            self.ui.souce_camera.setEnabled(True)
+            self.ui.source_dir.setEnabled(True)
+            LOGGER.info('The workspace has been cleaned')
 
     def stack_images(self, imgs_list: tuple, list_lables: list = []):
         rows = len(imgs_list)
@@ -221,7 +206,6 @@ class Backend(Resources):
                 for y in range(0, cols):
                     if len(imgs_list[x][y].shape) == 2:
                         imgs_list[x][y] = cv2.cvtColor(imgs_list[x][y], cv2.COLOR_GRAY2BGR)
-                    imgs_list[x][y] = imutils.resize(imgs_list[x][y], height=720)
 
             if len(list_lables) != 0:
                 for x in range(0, rows):
@@ -237,7 +221,6 @@ class Backend(Resources):
 
             return final_img_stack
 
-
     def reorder(self, myPoints):
         myPoints = myPoints.reshape((4, 2))
         myPointsNew = numpy.zeros((4, 1, 2), dtype=numpy.int32)
@@ -251,8 +234,8 @@ class Backend(Resources):
 
         return myPointsNew
 
-
-    def biggestContour(self, contours):
+    @staticmethod
+    def find_biggest_contour( contours):
         biggest = numpy.array([])
         max_area = 0
         for i in contours:
@@ -265,8 +248,8 @@ class Backend(Resources):
                     max_area = area
         return biggest, max_area
 
-
-    def draw_rectangle(self, img, biggest, thickness):
+    @staticmethod
+    def draw_rectangle( img, biggest, thickness):
         cv2.line(img, (biggest[0][0][0], biggest[0][0][1]), (biggest[1][0][0], biggest[1][0][1]), (0, 255, 0),
                  thickness)
         cv2.line(img, (biggest[0][0][0], biggest[0][0][1]), (biggest[2][0][0], biggest[2][0][1]), (0, 255, 0),
@@ -277,6 +260,27 @@ class Backend(Resources):
                  thickness)
 
         return img
+
+    @staticmethod
+    def draw_on_image(img, message, **kwargs):
+        background = kwargs.get('background', False)
+
+        if background:
+            r_img = cv2.rectangle(img, (5, 5), (int(len(message) * 15 + 20), 50), (255, 255, 255), thickness=-1)
+
+        r_img = cv2.putText(img, message, (15, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 255), 2)
+
+        return r_img
+
+    @staticmethod
+    def hstack_imgs(list_of_imgs: list):
+        hstack = None
+        for x in range(0, len(list_of_imgs)):
+            if x == 0:
+                hstack = list_of_imgs[x]
+            else:
+                hstack = numpy.hstack((hstack, list_of_imgs[x]))
+        return hstack
 
 # def find_key(k):
 #     if k == 'a':

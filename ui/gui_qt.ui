@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -14,7 +17,7 @@
    <string>Document Scanner</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,0,0,2">
+   <layout class="QHBoxLayout" name="horizontalLayout_7" stretch="0,0,0,1">
     <item>
      <spacer name="horizontalSpacer_7">
       <property name="orientation">
@@ -77,15 +80,21 @@
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout">
              <item>
-              <widget class="QPushButton" name="source_camera">
-               <property name="text">
-                <string>Camera</string>
+              <widget class="QComboBox" name="souce_camera">
+               <property name="cursor">
+                <cursorShape>PointingHandCursor</cursorShape>
                </property>
-               <property name="checkable">
-                <bool>true</bool>
+               <property name="toolTip">
+                <string/>
                </property>
-               <property name="flat">
+               <property name="statusTip">
+                <string/>
+               </property>
+               <property name="editable">
                 <bool>false</bool>
+               </property>
+               <property name="currentText">
+                <string/>
                </property>
               </widget>
              </item>
@@ -112,7 +121,7 @@
             </layout>
            </item>
            <item>
-            <widget class="QTreeView" name="camera_treeview"/>
+            <widget class="QTreeView" name="directory_treeview"/>
            </item>
           </layout>
          </widget>
@@ -635,7 +644,7 @@
        </spacer>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="0,0,0,0,0,0,0">
+       <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="1,1,1,1,1,1,1">
         <property name="spacing">
          <number>2</number>
         </property>
@@ -724,14 +733,44 @@
        </layout>
       </item>
       <item>
-       <widget class="QLabel" name="author_label">
-        <property name="text">
-         <string>© Created by Giniga Gabriel-Andrei</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="horizontalLayout_6">
+        <item>
+         <widget class="QPushButton" name="rotate_source">
+          <property name="maximumSize">
+           <size>
+            <width>50</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Rotate</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="flip_source">
+          <property name="maximumSize">
+           <size>
+            <width>40</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Flip</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="author_label">
+          <property name="text">
+           <string>© Created by Giniga Gabriel-Andrei</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </item>
