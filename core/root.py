@@ -5,12 +5,13 @@ import os
 from core.needed import *
 from ui.gui import *
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('root')
 
 
 def root():
     resource = Backend()
     resource.create_signals()
+
 
     # for index, (name, command) in enumerate(resource.commands, 1):
     #     logger.info(f'DS -> Executing `{name}` [{index}/{len(resource.commands)}]')

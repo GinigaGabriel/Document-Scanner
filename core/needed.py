@@ -1,3 +1,4 @@
+import copy
 import pathlib
 import abc
 import cv2
@@ -19,7 +20,6 @@ PREVIEW_TAGS = [["Original", "Threshold", "Contours"],
                 ["Biggest Contour", "Warp Prespective", "Adaptive Threshold"]]
 
 
-
 class Resources(abc.ABC):
     pass
 
@@ -36,11 +36,9 @@ class Backend(Resources):
         self.ui.setupUi(self.main_window)
 
         self.main_window.show()
-        self.test=WorkerThread()
+        self.test = WorkerThread()
 
-
-
-    def catch(self,val):
+    def catch(self, val):
         print(val)
 
         # self.commands = (
@@ -79,13 +77,11 @@ class Backend(Resources):
             self.ui.souce_camera.setEnabled(False)
             self.ui.previous_button.setVisible(False)
             self.ui.next_button.setVisible(False)
-            self.test.resource=3.6
+            self.test.resource = copy.deepcopy(cv2.imread(path))
             self.test.start()
 
-
     def loop(self, resource):
-        print(type(resource))
-        print(resource)
+
         while True:
             time.sleep(0.3)
             height, width, channel = resource.shape
@@ -235,7 +231,7 @@ class Backend(Resources):
         return myPointsNew
 
     @staticmethod
-    def find_biggest_contour( contours):
+    def find_biggest_contour(contours):
         biggest = numpy.array([])
         max_area = 0
         for i in contours:
@@ -249,7 +245,7 @@ class Backend(Resources):
         return biggest, max_area
 
     @staticmethod
-    def draw_rectangle( img, biggest, thickness):
+    def draw_rectangle(img, biggest, thickness):
         cv2.line(img, (biggest[0][0][0], biggest[0][0][1]), (biggest[1][0][0], biggest[1][0][1]), (0, 255, 0),
                  thickness)
         cv2.line(img, (biggest[0][0][0], biggest[0][0][1]), (biggest[2][0][0], biggest[2][0][1]), (0, 255, 0),
