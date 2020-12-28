@@ -3,11 +3,12 @@ __pycache__/
 .idea/
 logdir/
 Scanned/
-core/__pycahce__/
+**/__pycache__/
 ui/__pycahce__/
 *.py[cod]
 *$py.class
-
+*.pyc
+*.pyo
 # C extensions
 *.so
 

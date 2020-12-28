@@ -35,7 +35,7 @@
      </spacer>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
+     <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0">
       <item>
        <spacer name="verticalSpacer_6">
         <property name="orientation">
@@ -80,7 +80,13 @@
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout">
              <item>
-              <widget class="QComboBox" name="souce_camera">
+              <widget class="QComboBox" name="source_camera">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>30</height>
+                </size>
+               </property>
                <property name="cursor">
                 <cursorShape>PointingHandCursor</cursorShape>
                </property>
@@ -100,6 +106,12 @@
              </item>
              <item>
               <widget class="QPushButton" name="source_file">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>30</height>
+                </size>
+               </property>
                <property name="text">
                 <string>One File</string>
                </property>
@@ -110,6 +122,12 @@
              </item>
              <item>
               <widget class="QPushButton" name="source_dir">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>30</height>
+                </size>
+               </property>
                <property name="text">
                 <string>All from Directory</string>
                </property>
@@ -238,19 +256,23 @@
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_16">
             <item>
-             <widget class="QLabel" name="label_16">
+             <widget class="QLabel" name="label_max_area">
               <property name="text">
-               <string>TextLabel</string>
+               <string>Maximum Area %</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLCDNumber" name="lcdNumber_16"/>
+             <widget class="QLCDNumber" name="lcd_max_area">
+              <property name="segmentStyle">
+               <enum>QLCDNumber::Flat</enum>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
           <item>
-           <widget class="QDial" name="dial_16"/>
+           <widget class="QDial" name="dial_max_area"/>
           </item>
          </layout>
         </item>
@@ -267,8 +289,18 @@
             </item>
             <item>
              <widget class="QLCDNumber" name="lcd_thresh_y">
+              <property name="font">
+               <font>
+                <weight>50</weight>
+                <bold>false</bold>
+                <kerning>true</kerning>
+               </font>
+              </property>
               <property name="styleSheet">
                <string notr="true">color: rgb(0, 0, 0);</string>
+              </property>
+              <property name="segmentStyle">
+               <enum>QLCDNumber::Flat</enum>
               </property>
              </widget>
             </item>
@@ -307,7 +339,11 @@
              </widget>
             </item>
             <item>
-             <widget class="QLCDNumber" name="lcd_kernel"/>
+             <widget class="QLCDNumber" name="lcd_kernel">
+              <property name="segmentStyle">
+               <enum>QLCDNumber::Flat</enum>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
@@ -331,19 +367,23 @@
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_13">
             <item>
-             <widget class="QLabel" name="label_13">
+             <widget class="QLabel" name="label_min_area">
               <property name="text">
-               <string>TextLabel</string>
+               <string>Minimum Area %</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLCDNumber" name="lcdNumber_13"/>
+             <widget class="QLCDNumber" name="lcd_min_area">
+              <property name="segmentStyle">
+               <enum>QLCDNumber::Flat</enum>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
           <item>
-           <widget class="QDial" name="dial_13"/>
+           <widget class="QDial" name="dial_min_area"/>
           </item>
          </layout>
         </item>
@@ -368,6 +408,9 @@
               </property>
               <property name="styleSheet">
                <string notr="true">color: rgb(0, 0, 0);</string>
+              </property>
+              <property name="segmentStyle">
+               <enum>QLCDNumber::Flat</enum>
               </property>
              </widget>
             </item>
@@ -421,7 +464,11 @@
              </widget>
             </item>
             <item>
-             <widget class="QLCDNumber" name="lcdNumber_11"/>
+             <widget class="QLCDNumber" name="lcdNumber_11">
+              <property name="segmentStyle">
+               <enum>QLCDNumber::Flat</enum>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
@@ -743,7 +790,7 @@
            </size>
           </property>
           <property name="text">
-           <string>Rotate</string>
+           <string/>
           </property>
          </widget>
         </item>
@@ -756,7 +803,7 @@
            </size>
           </property>
           <property name="text">
-           <string>Flip</string>
+           <string/>
           </property>
          </widget>
         </item>
