@@ -10,7 +10,7 @@ logger = logging.getLogger('root')
 
 def root():
     resource = Backend()
-    resource.create_signals()
+    resource.create_links()
 
 
     # for index, (name, command) in enumerate(resource.commands, 1):
