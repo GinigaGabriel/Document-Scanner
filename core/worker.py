@@ -4,8 +4,8 @@ import cv2
 from PyQt5.QtCore import QThread, pyqtSignal
 from ui.gui import *
 from core.needed import *
-from core.root import *
-from core.key_shortcuts import *
+
+from core.aside import *
 
 PREVIEW_TAGS = [["Original", "Threshold", "Contours"],
                 ["Biggest Contour", "Warp Prespective", "Adaptive Threshold"]]
@@ -16,9 +16,9 @@ class WorkerThread(QThread):
     resource = None
     eq_hist = False
     median_blur = 0
-    save_trigger=False
+    save_flag = False
     camera_flag = None
-
+    output = None
     dial_thresh_x = 0
     dial_thresh_y = 0
 
@@ -26,10 +26,14 @@ class WorkerThread(QThread):
     dial_max_area = 0
 
     def set_eq_hist(self, new_value):
-        if new_value:
-            eq_hist = True
+        if self.eq_hist:
+            self.eq_hist = True
         else:
-            eq_hist = False
+            self.eq_hist = False
+
+    def set_save_flag(self, new_value):
+        if self.isRunning():
+            self.save_flag = True
 
     def set_dial_thresh_x(self, new_value):
         self.dial_thresh_x = new_value
@@ -57,14 +61,15 @@ class WorkerThread(QThread):
         if self.camera_flag is not None:
             self.camera_flag.release()
             self.camera_flag = None
-        self.terminate()
         self.resource = None
+        self.save_flag = False
+        self.terminate()
 
     def loop(self):
         if self.resource is None:
             return
         height, width, channel = self.resource.shape
-        empty_img = numpy.zeros((height, width, channel), numpy.uint8)
+        not_available =generate_na(self.resource)
         kernel = numpy.ones((5, 5))
         resource_gray = cv2.cvtColor(self.resource, cv2.COLOR_BGR2GRAY)
 
@@ -86,8 +91,8 @@ class WorkerThread(QThread):
 
         poligon_points = self.find_biggest_poligon(contours)
         if poligon_points.size != 0:
-            poligon_points = self.reorder(poligon_points)
-            prev_contour = cv2.drawContours(drawn_polygon, poligon_points, -1, (0, 255, 0), 20)
+            poligon_points = reorder(poligon_points)
+            prev_contour = draw_rectangle(drawn_polygon, poligon_points, 5)
             pts1 = numpy.float32(poligon_points)
             pts2 = numpy.float32([[0, 0], [width, 0], [0, height], [width, height]])
             matrix = cv2.getPerspectiveTransform(pts1, pts2)
@@ -106,13 +111,12 @@ class WorkerThread(QThread):
             image_array = ([self.resource, edges, img_all_contours],
                            [prev_contour, save_warp_colored, img_adaptive_threshold])
 
-            if self.save_trigger:
-                save_key([save_warp_colored,img_adaptive_threshold])
-
-
+            if self.save_flag and self.isRunning():
+                save_key([save_warp_colored, img_adaptive_threshold], self.output)
+            self.save_flag = False
         else:
             image_array = ([self.resource, edges, img_all_contours],
-                           [empty_img, empty_img, empty_img])
+                           [not_available, not_available, not_available])
 
         stacked_images = self.stack_images(image_array, PREVIEW_TAGS)
 
@@ -131,52 +135,16 @@ class WorkerThread(QThread):
             if len(list_lables) != 0:
                 for x in range(0, rows):
                     for y in range(0, cols):
-                        imgs_list[x][y] = self.draw_on_image(imgs_list[x][y], list_lables[x][y], background=True)
+                        imgs_list[x][y] = draw_on_image(imgs_list[x][y], list_lables[x][y], background=True)
 
             for i in range(0, rows):
                 if i == 0:
-                    final_img_stack = self.hor_stack_imgs(imgs_list[i])
+                    final_img_stack = hor_stack_imgs(imgs_list[i])
 
                 else:
-                    final_img_stack = numpy.vstack((final_img_stack, self.hor_stack_imgs(imgs_list[i])))
+                    final_img_stack = numpy.vstack((final_img_stack, hor_stack_imgs(imgs_list[i])))
 
             return final_img_stack
-
-    @staticmethod
-    def draw_on_image(img, message, **kwargs):
-        background = kwargs.get('background', False)
-
-        if background:
-            r_img = cv2.rectangle(img, (5, 5), (int(len(message) * 15 + 20), 50), (255, 255, 255), thickness=-1)
-
-        r_img = cv2.putText(img, message, (15, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 255), 2)
-
-        return r_img
-
-    @staticmethod
-    def reorder(points):
-        points = points.reshape((4, 2))
-        new_points = numpy.zeros((4, 1, 2), dtype=numpy.int32)
-        add = points.sum(1)
-
-        new_points[0] = points[numpy.argmin(add)]
-        new_points[3] = points[numpy.argmax(add)]
-        diff = numpy.diff(points, axis=1)
-        new_points[1] = points[numpy.argmin(diff)]
-        new_points[2] = points[numpy.argmax(diff)]
-
-        return new_points
-
-    @staticmethod
-    def hor_stack_imgs(list_of_imgs: list):
-        horizontal_stack = None
-        for x in range(0, len(list_of_imgs)):
-            if x == 0:
-                horizontal_stack = list_of_imgs[x]
-            else:
-                horizontal_stack = numpy.hstack((horizontal_stack, list_of_imgs[x]))
-
-        return horizontal_stack
 
     def percent_of_resource_area(self, per) -> int:
         return int((per / 100) * (self.resource.shape[0] * self.resource.shape[1]))
@@ -192,19 +160,6 @@ class WorkerThread(QThread):
                 if len(approx) == 4:
                     biggest = approx
         return biggest
-
-    @staticmethod
-    def draw_rectangle(img, biggest, thickness):
-        cv2.line(img, (biggest[0][0][0], biggest[0][0][1]), (biggest[1][0][0], biggest[1][0][1]), (0, 255, 0),
-                 thickness)
-        cv2.line(img, (biggest[0][0][0], biggest[0][0][1]), (biggest[2][0][0], biggest[2][0][1]), (0, 255, 0),
-                 thickness)
-        cv2.line(img, (biggest[3][0][0], biggest[3][0][1]), (biggest[2][0][0], biggest[2][0][1]), (0, 255, 0),
-                 thickness)
-        cv2.line(img, (biggest[3][0][0], biggest[3][0][1]), (biggest[1][0][0], biggest[1][0][1]), (0, 255, 0),
-                 thickness)
-
-        return img
 
     def rotate(self):
         if self.resource is not None:
