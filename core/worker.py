@@ -21,17 +21,17 @@ class WorkerThread(QThread):
     output = None
     dial_thresh_x = 0
     dial_thresh_y = 0
-
+    dial_filter_dots = 0
     dial_min_area = 0
     dial_max_area = 0
 
-    def set_eq_hist(self, new_value):
+    def set_eq_hist(self):
         if self.eq_hist:
             self.eq_hist = True
         else:
             self.eq_hist = False
 
-    def set_save_flag(self, new_value):
+    def set_save_flag(self):
         if self.isRunning():
             self.save_flag = True
 
@@ -50,12 +50,15 @@ class WorkerThread(QThread):
     def set_dial_min_area(self, new_value):
         self.dial_min_area = new_value
 
+    def set_dial_filter_dots(self, new_value):
+        self.dial_filter_dots = new_value
+
     def run(self):
         while self.isRunning():
             if self.camera_flag is not None:
                 self.resource = self.camera_flag.read()[1]
             self.loop()
-            time.sleep(0.1)
+
 
     def stop(self):
         if self.camera_flag is not None:
@@ -69,27 +72,27 @@ class WorkerThread(QThread):
         if self.resource is None:
             return
         height, width, channel = self.resource.shape
-        not_available =generate_na(self.resource)
+        not_available = generate_na(self.resource)
         kernel = numpy.ones((5, 5))
         resource_gray = cv2.cvtColor(self.resource, cv2.COLOR_BGR2GRAY)
 
         if self.eq_hist:
             resource_gray = cv2.equalizeHist(resource_gray)
 
-        gaussian = cv2.GaussianBlur(resource_gray,
-                                    (2 * self.median_blur - 1, 2 * self.median_blur - 1),
-                                    1)
-        edges = cv2.Canny(gaussian, self.dial_thresh_x, self.dial_thresh_y)
+        gaussian = cv2.GaussianBlur(resource_gray, (5, 5), 0)
+
+        median = cv2.medianBlur(gaussian, 2 * self.median_blur - 1) if self.median_blur else gaussian
+
+        edges = cv2.Canny(median, self.dial_thresh_x, self.dial_thresh_y)
 
         img_dilate = cv2.dilate(edges, kernel, iterations=2)
         img_erode = cv2.erode(img_dilate, kernel, iterations=1)
+        poligons, poligon_points = self.filter_and_find_poligon(img_erode)
 
-        contours, hierarchy = cv2.findContours(img_erode, cv2.RETR_EXTERNAL,
-                                               cv2.CHAIN_APPROX_SIMPLE)
-        img_all_contours = cv2.drawContours(self.resource.copy(), contours, -1, (0, 255, 0), 10)
+        img_all_contours = cv2.drawContours(self.resource.copy(), poligons, -1, (0, 255, 0), 10)
+
         drawn_polygon = self.resource.copy()
 
-        poligon_points = self.find_biggest_poligon(contours)
         if poligon_points.size != 0:
             poligon_points = reorder(poligon_points)
             prev_contour = draw_rectangle(drawn_polygon, poligon_points, 5)
@@ -100,9 +103,10 @@ class WorkerThread(QThread):
 
             # TO SAVE SECTION
 
-            save_warp_gray = cv2.medianBlur(cv2.cvtColor(save_warp_colored, cv2.COLOR_BGR2GRAY),
-                                            2 * self.median_blur - 1) if self.median_blur else cv2.cvtColor(
-                save_warp_colored, cv2.COLOR_BGR2GRAY)
+            save_warp_gray = cv2.GaussianBlur(cv2.cvtColor(save_warp_colored, cv2.COLOR_BGR2GRAY), (5, 5), 0)
+
+            save_warp_gray = cv2.medianBlur(save_warp_gray,
+                                            2 * self.median_blur - 1) if self.median_blur else save_warp_gray
 
             img_adaptive_threshold = cv2.adaptiveThreshold(save_warp_gray, 255, 1, 1, 7, 2)
 
@@ -121,6 +125,25 @@ class WorkerThread(QThread):
         stacked_images = self.stack_images(image_array, PREVIEW_TAGS)
 
         self.result.emit(stacked_images)
+
+    def filter_and_find_poligon(self, base):
+        try:
+            poligon = numpy.array([])
+            poligons = []
+            for i in cv2.findContours(base, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]:
+                area = cv2.contourArea(i)
+                if area > self.percent_of_resource_area(self.dial_filter_dots / 2):
+                    poligons.append(i)
+                if self.percent_of_resource_area(self.dial_min_area) < area < self.percent_of_resource_area(
+                        self.dial_max_area):
+                    peri = cv2.arcLength(i, True)
+                    approx = cv2.approxPolyDP(i, 0.02 * peri, True)
+                    if len(approx) == 4:
+                        poligon = approx
+            return poligons, poligon
+        except Exception as e:
+            print(e)
+            exit(23)
 
     def stack_images(self, imgs_list: tuple, list_lables: list = []):
         rows = len(imgs_list)
@@ -149,17 +172,7 @@ class WorkerThread(QThread):
     def percent_of_resource_area(self, per) -> int:
         return int((per / 100) * (self.resource.shape[0] * self.resource.shape[1]))
 
-    def find_biggest_poligon(self, contours):
-        biggest = numpy.array([])
-        for i in contours:
-            area = cv2.contourArea(i)
-            if self.percent_of_resource_area(self.dial_min_area) < area < self.percent_of_resource_area(
-                    self.dial_max_area):
-                peri = cv2.arcLength(i, True)
-                approx = cv2.approxPolyDP(i, 0.02 * peri, True)
-                if len(approx) == 4:
-                    biggest = approx
-        return biggest
+    # def filter_dots(self):
 
     def rotate(self):
         if self.resource is not None:

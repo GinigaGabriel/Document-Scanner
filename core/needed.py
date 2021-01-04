@@ -108,7 +108,8 @@ class Backend(Resources):
         self.ui.dial_thresh_y.valueChanged.connect(self.ui.lcd_thresh_y.display)
         self.ui.dial_min_area.valueChanged.connect(self.ui.lcd_min_area.display)
         self.ui.dial_max_area.valueChanged.connect(self.ui.lcd_max_area.display)
-        self.ui.dial_kernel.valueChanged.connect(self.ui.lcd_kernel.display)
+        self.ui.dial_median.valueChanged.connect(self.ui.lcd_median.display)
+        self.ui.dial_filter_dots.valueChanged.connect(self.ui.lcd_filter_dots.display)
         self.ui.source_camera.currentIndexChanged.connect(self.source_camera_value_changed)
 
         self.detect_cameras()
@@ -120,9 +121,10 @@ class Backend(Resources):
         self.ui.eq_hist.clicked.connect(WORKER.set_eq_hist)
         self.ui.dial_thresh_x.valueChanged.connect(WORKER.set_dial_thresh_x)
         self.ui.dial_thresh_y.valueChanged.connect(WORKER.set_dial_thresh_y)
-        self.ui.dial_kernel.valueChanged.connect(WORKER.set_kernel)
+        self.ui.dial_median.valueChanged.connect(WORKER.set_kernel)
         self.ui.dial_min_area.valueChanged.connect(WORKER.set_dial_min_area)
         self.ui.dial_max_area.valueChanged.connect(WORKER.set_dial_max_area)
+        self.ui.dial_filter_dots.valueChanged.connect(WORKER.set_dial_filter_dots)
         WORKER.output = self.output_dir
         WORKER.result.connect(self.show)
 

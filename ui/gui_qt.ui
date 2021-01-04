@@ -73,37 +73,15 @@
               </font>
              </property>
              <property name="text">
-              <string>Choose the source</string>
+              <string>Choose input source</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
              </property>
             </widget>
            </item>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout">
-             <item>
-              <widget class="QComboBox" name="source_camera">
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>30</height>
-                </size>
-               </property>
-               <property name="cursor">
-                <cursorShape>PointingHandCursor</cursorShape>
-               </property>
-               <property name="toolTip">
-                <string/>
-               </property>
-               <property name="statusTip">
-                <string/>
-               </property>
-               <property name="editable">
-                <bool>false</bool>
-               </property>
-               <property name="currentText">
-                <string/>
-               </property>
-              </widget>
-             </item>
              <item>
               <widget class="QPushButton" name="source_file">
                <property name="minimumSize">
@@ -133,6 +111,31 @@
                </property>
                <property name="checkable">
                 <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="source_camera">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>30</height>
+                </size>
+               </property>
+               <property name="cursor">
+                <cursorShape>PointingHandCursor</cursorShape>
+               </property>
+               <property name="toolTip">
+                <string/>
+               </property>
+               <property name="statusTip">
+                <string/>
+               </property>
+               <property name="editable">
+                <bool>false</bool>
+               </property>
+               <property name="currentText">
+                <string/>
                </property>
               </widget>
              </item>
@@ -230,6 +233,16 @@
         </property>
         <property name="text">
          <string>Adjusts the parameters</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="eq_hist">
+        <property name="text">
+         <string>Equalize Histogram</string>
         </property>
        </widget>
       </item>
@@ -332,14 +345,14 @@
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_12">
             <item>
-             <widget class="QLabel" name="kernel_dim">
+             <widget class="QLabel" name="label_median">
               <property name="text">
                <string>Median ksize</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLCDNumber" name="lcd_kernel">
+             <widget class="QLCDNumber" name="lcd_median">
               <property name="segmentStyle">
                <enum>QLCDNumber::Flat</enum>
               </property>
@@ -348,7 +361,7 @@
            </layout>
           </item>
           <item>
-           <widget class="QDial" name="dial_kernel">
+           <widget class="QDial" name="dial_median">
             <property name="minimum">
              <number>1</number>
             </property>
@@ -457,14 +470,14 @@
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_11">
             <item>
-             <widget class="QLabel" name="label_11">
+             <widget class="QLabel" name="label_filter_dots">
               <property name="text">
-               <string>TextLabel</string>
+               <string>Filter small contours</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLCDNumber" name="lcdNumber_11">
+             <widget class="QLCDNumber" name="lcd_filter_dots">
               <property name="segmentStyle">
                <enum>QLCDNumber::Flat</enum>
               </property>
@@ -473,7 +486,14 @@
            </layout>
           </item>
           <item>
-           <widget class="QDial" name="dial_11"/>
+           <widget class="QDial" name="dial_filter_dots">
+            <property name="maximum">
+             <number>20</number>
+            </property>
+            <property name="pageStep">
+             <number>1</number>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
@@ -487,7 +507,7 @@
           </property>
           <property name="sizeHint" stdset="0">
            <size>
-            <width>30</width>
+            <width>20</width>
             <height>20</height>
            </size>
           </property>
@@ -510,37 +530,6 @@
          </size>
         </property>
        </spacer>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="2,1,2">
-        <item>
-         <widget class="QCheckBox" name="eq_hist">
-          <property name="text">
-           <string>Equalize Histogram</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <spacer name="horizontalSpacer_9">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>10</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="median_blur">
-          <property name="text">
-           <string>Add Median Blur</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
       </item>
       <item>
        <spacer name="verticalSpacer_5">
@@ -569,6 +558,9 @@
         </property>
         <property name="text">
          <string>Choose output directory</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
         </property>
        </widget>
       </item>
