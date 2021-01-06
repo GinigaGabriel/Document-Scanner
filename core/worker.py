@@ -4,11 +4,13 @@ import cv2
 from PyQt5.QtCore import QThread, pyqtSignal
 from ui.gui import *
 from core.needed import *
-
+import logging
 from core.aside import *
 
+LOGGER = logging.getLogger(__name__)
+
 PREVIEW_TAGS = [["Original", "Threshold", "Contours"],
-                ["Biggest Contour", "Warp Prespective", "Adaptive Threshold"]]
+                ["Biggest Contour", "Warp Prespective", "Binary Warp Prespective"]]
 
 
 class WorkerThread(QThread):
@@ -24,6 +26,7 @@ class WorkerThread(QThread):
     dial_filter_dots = 0
     dial_min_area = 0
     dial_max_area = 0
+    LOGGER.info('dasd3123123a')
 
     def set_eq_hist(self):
         if self.eq_hist:
@@ -58,7 +61,6 @@ class WorkerThread(QThread):
             if self.camera_flag is not None:
                 self.resource = self.camera_flag.read()[1]
             self.loop()
-
 
     def stop(self):
         if self.camera_flag is not None:

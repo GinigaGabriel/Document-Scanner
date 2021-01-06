@@ -1,37 +1,29 @@
-import copy
-import pathlib
-import abc
-import cv2
-import numpy
-import sys
-
 from core.worker import *
-import logging
-
 from ui.gui import *
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QMessageBox, QTreeWidgetItem
-import time
+import pathlib
+import sys
+import copy
 from PyQt5.QtWidgets import QFileDialog
+import logging
 
-LOGGER = logging.getLogger('root')
+
 DESKTOP_PATH = pathlib.Path.home() / 'Desktop'
 
 WORKER = WorkerThread()
 
+LOGGER=logging.getLogger(__name__)
 
 # icon_flip= QtGui.QPixmap("resources/flip.png")
 # self.flip_source.setIcon(QtGui.QIcon(icon_flip))
 # icon_rotate = QtGui.QPixmap("resources/rotate.png")
 # self.rotate_source.setIcon(QtGui.QIcon(icon_rotate))
 
-class Resources(abc.ABC):
-    pass
-
-
-class Backend(Resources):
+class Backend():
 
     def __init__(self):
+
         self.output_dir = pathlib.Path.home() / 'Desktop' / 'DS'
         self.output_dir.parent.mkdir(parents=True, exist_ok=True)
         self.app = QtWidgets.QApplication(sys.argv)
@@ -42,15 +34,21 @@ class Backend(Resources):
 
         self.main_window.show()
 
-        # self.commands = (
-        #     ('Generate Graphical User Interface', self.generate_gui()),
-        #     ('Execute core functionality', self.loop()),
-        #     ('Create signals between gui and controls ', self.create_signals())
-        # )
+        self.commands = (
+            ('Detect cameras', self.detect_cameras()),
+            ('Create signals between gui and controls ', self.create_links()),
+            ('Prepare environment', self.create_output_dir())
+        )
+
+    def create_output_dir(self):
+        self.output_dir.parent.mkdir(parents=True, exist_ok=True)
+        (self.output_dir / 'Colored').mkdir(parents=True, exist_ok=True)
+        (self.output_dir / 'Binary').mkdir(parents=True, exist_ok=True)
 
     def detect_cameras(self):
         index = 0
         self.ui.source_camera.clear()
+        LOGGER.info('camera')
         self.ui.source_camera.setPlaceholderText('Cameras')
         while True:
             cap = cv2.VideoCapture(index, cv2.CAP_DSHOW)
@@ -65,11 +63,11 @@ class Backend(Resources):
             index += 1
         if index == 0:
             self.ui.source_camera.setPlaceholderText('No cameras')
+            self.ui.source_camera.setEnabled(False)
 
     def source_camera_value_changed(self):
         if self.ui.source_camera.currentIndex() != -1:
             if cv2.VideoCapture(self.ui.source_camera.currentIndex(), cv2.CAP_DSHOW).read()[0]:
-                self.ui.source_dir.setEnabled(False)
                 self.ui.source_file.setEnabled(False)
                 self.ui.source_camera.setEnabled(False)
                 self.ui.display_area.setText("Loading")
@@ -85,21 +83,15 @@ class Backend(Resources):
     def source_file_checked(self):
         path = self.get_image_path()
         if len(path):
-            self.ui.source_dir.setEnabled(False)
             self.ui.source_camera.setEnabled(False)
             self.ui.previous_button.setVisible(False)
             self.ui.next_button.setVisible(False)
             WORKER.resource = copy.deepcopy(cv2.imread(path))
             WORKER.start()
 
-    def source_dir_checked(self):
-        self.ui.source_file.setChecked(False)
-        self.ui.source_camera.setEnabled(False)
-
     def create_links(self):
         self.ui.output_path_label.setText('Desktop is default location.')  # move to gui.py
         self.ui.select_output_button.clicked.connect(self.select_output_dir)
-        self.ui.source_dir.clicked.connect(self.source_dir_checked)
         self.ui.source_file.clicked.connect(self.source_file_checked)
         self.ui.clear_the_workspace.clicked.connect(self.clean_workspace)
 
@@ -111,7 +103,6 @@ class Backend(Resources):
         self.ui.dial_median.valueChanged.connect(self.ui.lcd_median.display)
         self.ui.dial_filter_dots.valueChanged.connect(self.ui.lcd_filter_dots.display)
         self.ui.source_camera.currentIndexChanged.connect(self.source_camera_value_changed)
-
         self.detect_cameras()
 
         # Worker
@@ -136,18 +127,16 @@ class Backend(Resources):
                 WORKER.stop()
                 LOGGER.info('The worker stopped')
                 self.ui.display_area.clear()
-                self.ui.source_dir.setEnabled(True)
                 self.ui.source_file.setEnabled(True)
                 self.ui.source_camera.setEnabled(True)
                 self.ui.source_camera.setCurrentIndex(-1)
-                self.ui.display_area.setText("Choose one of three options from top left corner. ")
+                self.ui.display_area.setText("Choose one of two options from top left corner. ")
                 LOGGER.info('The workspace has been cleaned')
 
     def show(self, val):
         if WORKER.isRunning():
             stacked_images_copy = QtGui.QImage(val.data, val.shape[1], val.shape[0],
-                                               3 * val.shape[1],
-                                               QtGui.QImage.Format_BGR888)
+                                               3 * val.shape[1], QtGui.QImage.Format_BGR888)
             pixmap = QtGui.QPixmap(stacked_images_copy)
             self.ui.display_area.setPixmap(pixmap)
 
