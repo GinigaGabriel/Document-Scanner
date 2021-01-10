@@ -1,36 +1,14 @@
-"""
-Module with the logging related configurations and methods
-"""
-import datetime
-import logging.config
+import logging
 import pathlib
+import datetime
 
-path = pathlib.Path.cwd() / f"logdir/{datetime.datetime.now().strftime('%d-%m_%H-%M-%S')}.txt"
+def setup_custom_logger(name):
+    formatter = logging.Formatter(fmt='%(asctime)s - %(levelname)s - %(module)s - %(message)s')
 
-LOGGING_CONFIG = {
-    'version': 1,
-    'disable_existing_loggers': True,
-    'formatters': {
-        'ds.formatter': {
-            'format': '%(levelname)-8s %(asctime)s %(name)s -> %(message)s',
-            'datefmt': '%Y-%m-%d %H:%M:%S',
-            'style': '%'
-        }
-    },
+    handler = logging.FileHandler(filename=pathlib.Path.cwd() / f'logdir/{datetime.datetime.now().strftime("%d-%m_%H-%M-%S")}.txt')
+    handler.setFormatter(formatter)
 
-    'handlers': {
-        'file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': f'{path}',
-            'mode': 'a',
-            'formatter': 'ds.formatter'
-        }
-    }
-
-}
-
-
-def configure_logger():
-    print(path)
-    logging.config.dictConfig(LOGGING_CONFIG)
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(handler)
+    return logger

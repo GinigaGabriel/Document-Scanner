@@ -1,37 +1,36 @@
 from core.worker import *
 from ui.gui import *
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QMessageBox, QTreeWidgetItem
+from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QMessageBox
 import pathlib
 import sys
 import copy
 from PyQt5.QtWidgets import QFileDialog
 import logging
 
+from ui.preview import start
 
 DESKTOP_PATH = pathlib.Path.home() / 'Desktop'
 
 WORKER = WorkerThread()
 
-LOGGER=logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
+
 
 # icon_flip= QtGui.QPixmap("resources/flip.png")
 # self.flip_source.setIcon(QtGui.QIcon(icon_flip))
 # icon_rotate = QtGui.QPixmap("resources/rotate.png")
 # self.rotate_source.setIcon(QtGui.QIcon(icon_rotate))
 
-class Backend():
+class Backend:
 
     def __init__(self):
-
         self.output_dir = pathlib.Path.home() / 'Desktop' / 'DS'
-        self.output_dir.parent.mkdir(parents=True, exist_ok=True)
+        self.create_output_dir()
         self.app = QtWidgets.QApplication(sys.argv)
         self.ui = Ui_MainWindow()
         self.main_window = QtWidgets.QMainWindow()
-
         self.ui.setupUi(self.main_window)
-
         self.main_window.show()
 
         self.commands = (
@@ -84,10 +83,22 @@ class Backend():
         path = self.get_image_path()
         if len(path):
             self.ui.source_camera.setEnabled(False)
-            self.ui.previous_button.setVisible(False)
-            self.ui.next_button.setVisible(False)
             WORKER.resource = copy.deepcopy(cv2.imread(path))
             WORKER.start()
+
+    def exit(self):
+        quit_msg = "Are you sure you want to exit the program?"
+        reply = QMessageBox.question(self.main_window, 'Exit', quit_msg, QMessageBox.Yes,
+                                     QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            if WORKER.isRunning():
+                WORKER.stop()
+            sys.exit()
+
+
+    def show_preview(self):
+        if WORKER.isRunning() and WORKER.preview is not None:
+            start(WORKER.preview)
 
     def create_links(self):
         self.ui.output_path_label.setText('Desktop is default location.')  # move to gui.py
@@ -96,6 +107,7 @@ class Backend():
         self.ui.clear_the_workspace.clicked.connect(self.clean_workspace)
 
         # UI Part
+        self.ui.actionExit.triggered.connect(self.exit)
         self.ui.dial_thresh_x.valueChanged.connect(self.ui.lcd_thresh_x.display)
         self.ui.dial_thresh_y.valueChanged.connect(self.ui.lcd_thresh_y.display)
         self.ui.dial_min_area.valueChanged.connect(self.ui.lcd_min_area.display)
@@ -103,12 +115,13 @@ class Backend():
         self.ui.dial_median.valueChanged.connect(self.ui.lcd_median.display)
         self.ui.dial_filter_dots.valueChanged.connect(self.ui.lcd_filter_dots.display)
         self.ui.source_camera.currentIndexChanged.connect(self.source_camera_value_changed)
+        self.ui.preview_button.clicked.connect(self.show_preview)
         self.detect_cameras()
 
         # Worker
         self.ui.save_button.clicked.connect(WORKER.set_save_flag)
-        self.ui.flip_source.clicked.connect(WORKER.flip)
-        self.ui.rotate_source.clicked.connect(WORKER.rotate)
+        self.ui.flip_source.clicked.connect(WORKER.flip_source)
+        self.ui.rotate_source.clicked.connect(WORKER.rotate_source)
         self.ui.eq_hist.clicked.connect(WORKER.set_eq_hist)
         self.ui.dial_thresh_x.valueChanged.connect(WORKER.set_dial_thresh_x)
         self.ui.dial_thresh_y.valueChanged.connect(WORKER.set_dial_thresh_y)
@@ -155,7 +168,7 @@ class Backend():
         directory = str(QFileDialog.getExistingDirectory(self.main_window, "Select Directory"))
         if pathlib.Path(directory).is_dir() and len(directory) > 3:
             self.output_dir = pathlib.Path(directory)
-            self.output_dir.parent.mkdir(parents=True, exist_ok=True)
+            self.create_output_dir()
             WORKER.output = pathlib.Path(directory)
             lenght_of_path = len(str(self.output_dir))
             self.ui.output_path_label.setToolTip(str(directory))

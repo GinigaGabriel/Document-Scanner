@@ -4,20 +4,20 @@ import logging
 import pathlib
 import numpy
 
-LOGGER=logging.getLogger(__name__)
+
 
 def save_key(data, output_location):
-    try:
-        photo_name = f"{(datetime.datetime.now()).strftime('DS_%H-%M-%S')}.png"
-        image_path = str(pathlib.Path(output_location / 'Colored' / photo_name))
-        cv2.imwrite(image_path, data[0], params=(cv2.IMWRITE_PNG_COMPRESSION, 0))
+    output_location.parent.mkdir(parents=True, exist_ok=True)
+    (output_location / 'Colored').mkdir(parents=True, exist_ok=True)
+    (output_location / 'Binary').mkdir(parents=True, exist_ok=True)
+    photo_name = f"{(datetime.datetime.now()).strftime('DS_%H-%M-%S')}.png"
+    image_path = str(pathlib.Path(output_location / 'Colored' / photo_name))
+    cv2.imwrite(image_path, data[0], params=(cv2.IMWRITE_PNG_COMPRESSION, 0))
 
-        photo_name_black_and_white = f"{(datetime.datetime.now()).strftime('DS_%H-%M-%S B')}.png"
-        image_path_black_white = str(pathlib.Path(output_location / 'Binary' / photo_name_black_and_white))
-        cv2.imwrite(image_path_black_white, data[1], params=(cv2.IMWRITE_PNG_COMPRESSION, 0))
-        print(image_path)
-    except Exception as e:
-        LOGGER.error(e)
+    photo_name_black_and_white = f"{(datetime.datetime.now()).strftime('DS_%H-%M-%S B')}.png"
+    image_path_black_white = str(pathlib.Path(output_location / 'Binary' / photo_name_black_and_white))
+    cv2.imwrite(image_path_black_white, data[1], params=(cv2.IMWRITE_PNG_COMPRESSION, 0))
+    print(image_path)
 
 
 def draw_on_image(img, message, **kwargs):

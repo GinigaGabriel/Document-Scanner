@@ -3,11 +3,16 @@ import numpy
 import cv2
 from PyQt5.QtCore import QThread, pyqtSignal
 from ui.gui import *
+
 from core.needed import *
 import logging
 from core.aside import *
+from root import *
+import core.log
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger('root')
+
+LOGGER.info('dsadasdsad12312312')
 
 PREVIEW_TAGS = [["Original", "Threshold", "Contours"],
                 ["Biggest Contour", "Warp Prespective", "Binary Warp Prespective"]]
@@ -16,17 +21,19 @@ PREVIEW_TAGS = [["Original", "Threshold", "Contours"],
 class WorkerThread(QThread):
     result = pyqtSignal(object)
     resource = None
+    preview = None
     eq_hist = False
     median_blur = 0
     save_flag = False
     camera_flag = None
     output = None
+    rotate = 0
+    flip = False
     dial_thresh_x = 0
     dial_thresh_y = 0
     dial_filter_dots = 0
     dial_min_area = 0
     dial_max_area = 0
-    LOGGER.info('dasd3123123a')
 
     def set_eq_hist(self):
         if self.eq_hist:
@@ -56,6 +63,12 @@ class WorkerThread(QThread):
     def set_dial_filter_dots(self, new_value):
         self.dial_filter_dots = new_value
 
+    def rotate_source(self):
+        self.rotate = self.rotate + 1 if self.rotate < 4 else 0
+
+    def flip_source(self):
+        self.flip = False if self.flip else True
+
     def run(self):
         while self.isRunning():
             if self.camera_flag is not None:
@@ -68,11 +81,19 @@ class WorkerThread(QThread):
             self.camera_flag = None
         self.resource = None
         self.save_flag = False
+        self.preview = None
         self.terminate()
 
     def loop(self):
         if self.resource is None:
             return
+        if self.flip:
+            self.resource = cv2.flip(self.resource, 1)
+
+        if self.rotate:
+            for i in range(self.rotate):
+                self.resource = cv2.rotate(self.resource, cv2.cv2.ROTATE_90_CLOCKWISE)
+
         height, width, channel = self.resource.shape
         not_available = generate_na(self.resource)
         kernel = numpy.ones((5, 5))
@@ -114,6 +135,7 @@ class WorkerThread(QThread):
 
             img_adaptive_threshold = cv2.bitwise_not(img_adaptive_threshold)
 
+            self.preview = save_warp_colored
             image_array = ([self.resource, edges, img_all_contours],
                            [prev_contour, save_warp_colored, img_adaptive_threshold])
 
@@ -121,12 +143,14 @@ class WorkerThread(QThread):
                 save_key([save_warp_colored, img_adaptive_threshold], self.output)
             self.save_flag = False
         else:
+            self.preview=None
             image_array = ([self.resource, edges, img_all_contours],
                            [not_available, not_available, not_available])
 
         stacked_images = self.stack_images(image_array, PREVIEW_TAGS)
 
         self.result.emit(stacked_images)
+
 
     def filter_and_find_poligon(self, base):
         try:
@@ -173,13 +197,3 @@ class WorkerThread(QThread):
 
     def percent_of_resource_area(self, per) -> int:
         return int((per / 100) * (self.resource.shape[0] * self.resource.shape[1]))
-
-    # def filter_dots(self):
-
-    def rotate(self):
-        if self.resource is not None:
-            self.resource = cv2.rotate(self.resource, cv2.cv2.ROTATE_90_CLOCKWISE)
-
-    def flip(self):
-        if self.resource is not None:
-            self.resource = cv2.flip(self.resource, 1)

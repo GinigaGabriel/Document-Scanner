@@ -713,7 +713,7 @@
        </spacer>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="1,1,1,1,1,1,1">
+       <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="1,1,1,1,1,0">
         <property name="spacing">
          <number>2</number>
         </property>
@@ -732,13 +732,6 @@
            </size>
           </property>
          </spacer>
-        </item>
-        <item>
-         <widget class="QPushButton" name="previous_button">
-          <property name="text">
-           <string>Previous</string>
-          </property>
-         </widget>
         </item>
         <item>
          <spacer name="horizontalSpacer_2">
@@ -780,13 +773,6 @@
          </spacer>
         </item>
         <item>
-         <widget class="QPushButton" name="next_button">
-          <property name="text">
-           <string>Next</string>
-          </property>
-         </widget>
-        </item>
-        <item>
          <spacer name="horizontalSpacer_6">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -798,6 +784,13 @@
            </size>
           </property>
          </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="preview_button">
+          <property name="text">
+           <string>Preview</string>
+          </property>
+         </widget>
         </item>
        </layout>
       </item>
@@ -858,7 +851,6 @@
     <property name="title">
      <string>Menu</string>
     </property>
-    <addaction name="actionKey_Shortcuts"/>
     <addaction name="separator"/>
     <addaction name="actionAbour"/>
     <addaction name="separator"/>
