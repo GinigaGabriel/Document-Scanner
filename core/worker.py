@@ -1,18 +1,6 @@
-import time
-import numpy
-import cv2
 from PyQt5.QtCore import QThread, pyqtSignal
-from ui.gui import *
-
-from core.needed import *
-import logging
+from core.core import *
 from core.aside import *
-from root import *
-import core.log
-
-LOGGER = logging.getLogger('root')
-
-LOGGER.info('dsadasdsad12312312')
 
 PREVIEW_TAGS = [["Original", "Threshold", "Contours"],
                 ["Biggest Contour", "Warp Prespective", "Binary Warp Prespective"]]
@@ -21,10 +9,10 @@ PREVIEW_TAGS = [["Original", "Threshold", "Contours"],
 class WorkerThread(QThread):
     result = pyqtSignal(object)
     resource = None
-    preview = None
     eq_hist = False
     median_blur = 0
     save_flag = False
+    save_signal=False
     camera_flag = None
     output = None
     rotate = 0
@@ -81,7 +69,7 @@ class WorkerThread(QThread):
             self.camera_flag = None
         self.resource = None
         self.save_flag = False
-        self.preview = None
+        self.save_signal=False
         self.terminate()
 
     def loop(self):
@@ -123,9 +111,7 @@ class WorkerThread(QThread):
             pts2 = numpy.float32([[0, 0], [width, 0], [0, height], [width, height]])
             matrix = cv2.getPerspectiveTransform(pts1, pts2)
             save_warp_colored = cv2.warpPerspective(self.resource, matrix, (width, height))
-
-            # TO SAVE SECTION
-
+            # SAVE SECTION
             save_warp_gray = cv2.GaussianBlur(cv2.cvtColor(save_warp_colored, cv2.COLOR_BGR2GRAY), (5, 5), 0)
 
             save_warp_gray = cv2.medianBlur(save_warp_gray,
@@ -139,37 +125,36 @@ class WorkerThread(QThread):
             image_array = ([self.resource, edges, img_all_contours],
                            [prev_contour, save_warp_colored, img_adaptive_threshold])
 
-            if self.save_flag and self.isRunning():
-                save_key([save_warp_colored, img_adaptive_threshold], self.output)
+            if self.isRunning():
+                self.save_signal=True
+                if self.save_flag:
+                    save_key([save_warp_colored, img_adaptive_threshold], self.output)
             self.save_flag = False
+
+
         else:
-            self.preview=None
+            self.save_signal=False
+            self.save_flag = False
             image_array = ([self.resource, edges, img_all_contours],
                            [not_available, not_available, not_available])
 
         stacked_images = self.stack_images(image_array, PREVIEW_TAGS)
-
         self.result.emit(stacked_images)
 
-
     def filter_and_find_poligon(self, base):
-        try:
-            poligon = numpy.array([])
-            poligons = []
-            for i in cv2.findContours(base, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]:
-                area = cv2.contourArea(i)
-                if area > self.percent_of_resource_area(self.dial_filter_dots / 2):
-                    poligons.append(i)
-                if self.percent_of_resource_area(self.dial_min_area) < area < self.percent_of_resource_area(
-                        self.dial_max_area):
-                    peri = cv2.arcLength(i, True)
-                    approx = cv2.approxPolyDP(i, 0.02 * peri, True)
-                    if len(approx) == 4:
-                        poligon = approx
-            return poligons, poligon
-        except Exception as e:
-            print(e)
-            exit(23)
+        poligon = numpy.array([])
+        poligons = []
+        for i in cv2.findContours(base, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]:
+            area = cv2.contourArea(i)
+            if area > self.percent_of_resource_area(self.dial_filter_dots / 2):
+                poligons.append(i)
+            if self.percent_of_resource_area(self.dial_min_area) < area < self.percent_of_resource_area(
+                    self.dial_max_area):
+                peri = cv2.arcLength(i, True)
+                approx = cv2.approxPolyDP(i, 0.02 * peri, True)
+                if len(approx) == 4:
+                    poligon = approx
+        return poligons, poligon
 
     def stack_images(self, imgs_list: tuple, list_lables: list = []):
         rows = len(imgs_list)

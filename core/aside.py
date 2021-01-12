@@ -1,33 +1,26 @@
 import cv2
 import datetime
-import logging
 import pathlib
 import numpy
 
 
-
 def save_key(data, output_location):
-    output_location.parent.mkdir(parents=True, exist_ok=True)
-    (output_location / 'Colored').mkdir(parents=True, exist_ok=True)
-    (output_location / 'Binary').mkdir(parents=True, exist_ok=True)
+    (output_location / 'DS/Colored').mkdir(parents=True, exist_ok=True)
+    (output_location / 'DS/Binary').mkdir(parents=True, exist_ok=True)
     photo_name = f"{(datetime.datetime.now()).strftime('DS_%H-%M-%S')}.png"
-    image_path = str(pathlib.Path(output_location / 'Colored' / photo_name))
+    image_path = str(pathlib.Path(output_location / 'DS/Colored' / photo_name))
     cv2.imwrite(image_path, data[0], params=(cv2.IMWRITE_PNG_COMPRESSION, 0))
-
     photo_name_black_and_white = f"{(datetime.datetime.now()).strftime('DS_%H-%M-%S B')}.png"
-    image_path_black_white = str(pathlib.Path(output_location / 'Binary' / photo_name_black_and_white))
+    image_path_black_white = str(pathlib.Path(output_location / 'DS/Binary' / photo_name_black_and_white))
     cv2.imwrite(image_path_black_white, data[1], params=(cv2.IMWRITE_PNG_COMPRESSION, 0))
-    print(image_path)
 
 
 def draw_on_image(img, message, **kwargs):
     background = kwargs.get('background', False)
-
     if background:
         r_img = cv2.rectangle(img, (5, 5), (int(len(message) * 15 + 20), 50), (255, 255, 255), thickness=-1)
 
     r_img = cv2.putText(img, message, (15, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 255), 2)
-
     return r_img
 
 
@@ -41,7 +34,6 @@ def reorder(points):
     diff = numpy.diff(points, axis=1)
     new_points[1] = points[numpy.argmin(diff)]
     new_points[2] = points[numpy.argmax(diff)]
-
     return new_points
 
 
@@ -65,7 +57,6 @@ def draw_rectangle(img, poligon, thickness):
              thickness)
     cv2.line(img, (poligon[3][0][0], poligon[3][0][1]), (poligon[1][0][0], poligon[1][0][1]), (0, 255, 0),
              thickness)
-
     return img
 
 

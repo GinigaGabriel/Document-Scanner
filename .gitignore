@@ -1,10 +1,8 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 .idea/
-logdir/
-Scanned/
-**/__pycache__/
 ui/__pycahce__/
+core/__pycache__/
 *.py[cod]
 *$py.class
 *.pyc
@@ -89,6 +87,7 @@ ipython_config.py
 
 # pyenv
 .python-version
+.pyc
 
 # pipenv
 #   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.

@@ -1,8 +1,7 @@
 import logging
 import pathlib
 import datetime
-from core.needed import *
-from core import log
+from core.core import *
 
 __version__ = '1.0.0'
 __author__ = 'Giniga Gabriel-Andrei'
@@ -10,7 +9,9 @@ __author__ = 'Giniga Gabriel-Andrei'
 
 def main():
     backend = Backend()
-
+    backend.detect_cameras()
+    backend.create_links()
+    backend.create_output_dir()
 
 if __name__ == "__main__":
     main()
