@@ -1,14 +1,14 @@
 import time
-
 from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5 import QtWidgets
-from core.worker import *
+from core.worker import WorkerThread
 from ui.gui import *
 import pathlib
 import copy
 import cv2
 import sys
+
 
 DESKTOP_PATH = pathlib.Path.home() / 'Desktop'
 WORKER = WorkerThread()
@@ -17,15 +17,17 @@ WORKER = WorkerThread()
 class Backend:
 
     def __init__(self):
+        super().__init__()
         self.timer = QtCore.QTimer()
         self.output_dir = DESKTOP_PATH
-        self.create_output_dir()
         self.app = QtWidgets.QApplication(sys.argv)
         self.ui = Ui_MainWindow()
         self.main_window = QtWidgets.QMainWindow()
         self.ui.setupUi(self.main_window)
+        self.main_window.setWindowIcon(QtGui.QIcon("resources/DSIcon.png"))
         self.main_window.show()
 
+        self.detect_cameras()
 
     def create_output_dir(self):
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -34,8 +36,9 @@ class Backend:
 
     def detect_cameras(self):
         index = 0
+
         self.ui.source_camera.clear()
-        self.ui.source_camera.setPlaceholderText('Cameras')
+        self.ui.source_camera.setPlaceholderText("Camera")
         while True:
             cap = cv2.VideoCapture(index, cv2.CAP_DSHOW)
             cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
@@ -47,6 +50,7 @@ class Backend:
                                                 f'x{int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))}'])
             cap.release()
             index += 1
+        print(self.ui.source_camera.placeholderText())
         if index == 0:
             self.ui.source_camera.setPlaceholderText('No cameras')
             self.ui.source_camera.setEnabled(False)
@@ -70,25 +74,35 @@ class Backend:
         path = self.get_image_path()
         if len(path):
             self.ui.source_camera.setEnabled(False)
-            WORKER.resource = copy.deepcopy(cv2.imread(path))
-            WORKER.start()
+            try:
+                test = cv2.imread(path)
+                WORKER.path = path
+                WORKER.start()
+            except Exception as e:
+                QMessageBox.information("Can't find the file.")
+                return
 
-    def exit(self):
+    def closeEvent(self, event):
         quit_msg = "Are you sure you want to exit the program?"
+        print('eeee')
+
         reply = QMessageBox.question(self.main_window, 'Exit', quit_msg, QMessageBox.Yes,
                                      QMessageBox.No)
+
         if reply == QMessageBox.Yes:
             if WORKER.isRunning():
                 WORKER.stop()
             sys.exit()
 
     def create_links(self):
+
         self.ui.output_path_label.setText('Desktop is default location.')
         self.ui.select_output_button.clicked.connect(self.select_output_dir)
         self.ui.source_file.clicked.connect(self.source_file_checked)
         self.ui.clear_the_workspace.clicked.connect(self.clean_workspace)
+        self.ui.actionExit.triggered.connect(self.closeEvent)
         # UI Part
-        self.ui.actionExit.triggered.connect(self.exit)
+
         self.ui.dial_thresh_x.valueChanged.connect(self.ui.lcd_thresh_x.display)
         self.ui.dial_thresh_y.valueChanged.connect(self.ui.lcd_thresh_y.display)
         self.ui.dial_min_area.valueChanged.connect(self.ui.lcd_min_area.display)
@@ -97,7 +111,7 @@ class Backend:
         self.ui.dial_filter_dots.valueChanged.connect(self.ui.lcd_filter_dots.display)
         self.ui.source_camera.currentIndexChanged.connect(self.source_camera_value_changed)
         self.timer.timeout.connect(self.save_motion_stop)
-        self.detect_cameras()
+
         # Worker
         self.ui.save_button.clicked.connect(WORKER.set_save_flag)
         self.ui.save_button.clicked.connect(self.save_motion_start)
@@ -112,20 +126,20 @@ class Backend:
         self.ui.dial_filter_dots.valueChanged.connect(WORKER.set_dial_filter_dots)
         WORKER.output = self.output_dir
         WORKER.result.connect(self.show)
-        sys.exit(self.app.exec_())
+
+        if self.app.exec_() == 0:
+            WORKER.stop()
+            sys.exit()
 
     def save_motion_start(self):
-
         if WORKER.isRunning() and WORKER.save_signal:
             self.ui.save_button.setText("Saving...")
             self.ui.save_button.setStyleSheet("background-color: green")
             self.timer.start(1000)
 
-
     def save_motion_stop(self):
         self.ui.save_button.setStyleSheet("background-color: light gray")
         self.ui.save_button.setText("Save")
-
 
     def clean_workspace(self):
         if WORKER.isRunning():

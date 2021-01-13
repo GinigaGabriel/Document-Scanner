@@ -9,9 +9,11 @@ __author__ = 'Giniga Gabriel-Andrei'
 
 def main():
     backend = Backend()
-    backend.detect_cameras()
+    
     backend.create_links()
     backend.create_output_dir()
 
+
 if __name__ == "__main__":
     main()
+

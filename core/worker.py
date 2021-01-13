@@ -8,13 +8,17 @@ PREVIEW_TAGS = [["Original", "Threshold", "Contours"],
 
 class WorkerThread(QThread):
     result = pyqtSignal(object)
+    path = None
     resource = None
+
     eq_hist = False
     median_blur = 0
     save_flag = False
-    save_signal=False
+    save_signal = False
     camera_flag = None
     output = None
+    rotate_file = 0
+    flip_file = False
     rotate = 0
     flip = False
     dial_thresh_x = 0
@@ -53,9 +57,11 @@ class WorkerThread(QThread):
 
     def rotate_source(self):
         self.rotate = self.rotate + 1 if self.rotate < 4 else 0
+        self.rotate_file = self.rotate + 1 if self.rotate_file < 4 else 0
 
     def flip_source(self):
         self.flip = False if self.flip else True
+        self.flip_file = False if self.flip_file else True
 
     def run(self):
         while self.isRunning():
@@ -67,21 +73,37 @@ class WorkerThread(QThread):
         if self.camera_flag is not None:
             self.camera_flag.release()
             self.camera_flag = None
+        self.path = None
         self.resource = None
         self.save_flag = False
-        self.save_signal=False
+        self.save_signal = False
         self.terminate()
 
     def loop(self):
-        if self.resource is None:
+
+        if self.path is None and self.camera_flag is None:
             return
-        if self.flip:
+
+        if self.path is not None:
+            self.resource = cv2.imread(self.path)
+
+        if self.camera_flag is None and self.flip_file:
             self.resource = cv2.flip(self.resource, 1)
 
-        if self.rotate:
+        if self.camera_flag is None:
             for i in range(self.rotate):
                 self.resource = cv2.rotate(self.resource, cv2.cv2.ROTATE_90_CLOCKWISE)
 
+        if self.camera_flag is not None and self.flip:
+            self.resource = cv2.flip(self.resource, 1)
+            print('1')
+
+        if self.camera_flag is not None:
+            for i in range(self.rotate):
+                self.resource = cv2.rotate(self.resource, cv2.cv2.ROTATE_90_CLOCKWISE)
+
+        if self.resource is None:
+            return
         height, width, channel = self.resource.shape
         not_available = generate_na(self.resource)
         kernel = numpy.ones((5, 5))
@@ -126,14 +148,14 @@ class WorkerThread(QThread):
                            [prev_contour, save_warp_colored, img_adaptive_threshold])
 
             if self.isRunning():
-                self.save_signal=True
+                self.save_signal = True
                 if self.save_flag:
                     save_key([save_warp_colored, img_adaptive_threshold], self.output)
             self.save_flag = False
 
 
         else:
-            self.save_signal=False
+            self.save_signal = False
             self.save_flag = False
             image_array = ([self.resource, edges, img_all_contours],
                            [not_available, not_available, not_available])

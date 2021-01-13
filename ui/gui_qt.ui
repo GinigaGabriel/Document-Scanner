@@ -23,7 +23,7 @@
    <string>Document Scanner</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="0,0,0,0,0,1">
+   <layout class="QHBoxLayout" name="horizontalLayout_7" stretch="0,0,0,0,0,2">
     <item>
      <spacer name="horizontalSpacer_7">
       <property name="orientation">
@@ -41,7 +41,78 @@
      </spacer>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0">
+     <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
+      <item>
+       <spacer name="verticalSpacer_9">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Preferred</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>318</width>
+          <height>10</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_5">
+        <item>
+         <spacer name="horizontalSpacer_10">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QLabel" name="logo">
+          <property name="maximumSize">
+           <size>
+            <width>250</width>
+            <height>90</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <family>MS UI Gothic</family>
+            <pointsize>14</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Document Scanner</string>
+          </property>
+          <property name="scaledContents">
+           <bool>true</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_11">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
       <item>
        <spacer name="verticalSpacer_6">
         <property name="orientation">
@@ -54,6 +125,19 @@
          <size>
           <width>20</width>
           <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
          </size>
         </property>
        </spacer>
@@ -131,26 +215,6 @@
              </item>
             </layout>
            </item>
-           <item>
-            <widget class="QLabel" name="output_treeview">
-             <property name="font">
-              <font>
-               <family>Arial</family>
-               <pointsize>12</pointsize>
-               <underline>true</underline>
-              </font>
-             </property>
-             <property name="text">
-              <string>Output directory content</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QTreeView" name="directory_treeview"/>
-           </item>
           </layout>
          </widget>
         </item>
@@ -196,22 +260,6 @@
          </widget>
         </item>
        </layout>
-      </item>
-      <item>
-       <spacer name="verticalSpacer">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Preferred</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>20</width>
-          <height>10</height>
-         </size>
-        </property>
-       </spacer>
       </item>
       <item>
        <spacer name="verticalSpacer_8">
@@ -521,22 +569,6 @@
          </spacer>
         </item>
        </layout>
-      </item>
-      <item>
-       <spacer name="verticalSpacer_4">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Preferred</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>278</width>
-          <height>10</height>
-         </size>
-        </property>
-       </spacer>
       </item>
       <item>
        <spacer name="verticalSpacer_5">
